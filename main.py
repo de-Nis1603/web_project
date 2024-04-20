@@ -1,9 +1,10 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, abort, request
 from data import db_session
 from data.users import User
 from data.notices import Notices
 from forms.user import RegisterForm, LoginForm
-from flask_login import LoginManager, login_user, login_required, logout_user
+from forms.notices import NoticeForm
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -13,12 +14,14 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 
 @login_manager.user_loader
 def load_user(user_id):
+    print(1)
     db_sess = db_session.create_session()
     return db_sess.query(User).get(user_id)
 
 
 @app.route("/")
 def index():
+    print(2)
     db_sess = db_session.create_session()
     news = db_sess.query(Notices)
     return render_template("index.html", news=news)
@@ -26,6 +29,7 @@ def index():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    print(3)
     form = RegisterForm()
     if form.validate_on_submit():
         if form.password.data != form.password_again.data:
@@ -51,6 +55,7 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    print(4)
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -67,9 +72,75 @@ def login():
 @app.route('/logout')
 @login_required
 def logout():
+    print(5)
     logout_user()
     return redirect("/")
 
+
+@app.route('/notice',  methods=['GET', 'POST'])
+@login_required
+def add_news():
+    print(6)
+    form = NoticeForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        news = Notices()
+        news.title = form.title.data
+        news.content = form.content.data
+        current_user.notices.append(news)
+        db_sess.merge(current_user)
+        db_sess.commit()
+        return redirect('/')
+    return render_template('notices.html', title='Добавление объявления',
+                           form=form)
+
+
+@app.route('/notice/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_news(id):
+    print(7)
+    form = NoticeForm()
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        news = db_sess.query(Notices).filter(Notices.id == id,
+                                          Notices.user == current_user
+                                          ).first()
+        if news:
+            form.title.data = news.title
+            form.content.data = news.content
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        news = db_sess.query(Notices).filter(Notices.id == id,
+                                          Notices.user == current_user
+                                          ).first()
+        if news:
+            news.title = form.title.data
+            news.content = form.content.data
+            db_sess.commit()
+            return redirect('/')
+        else:
+            abort(404)
+    return render_template('notices.html',
+                           title='Редактирование объявления',
+                           form=form
+                           )
+
+
+@app.route('/notice_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def news_delete(id):
+    db_sess = db_session.create_session()
+    news = db_sess.query(Notices).filter(Notices.id == id,
+                                      Notices.user == current_user
+                                      ).first()
+    if news:
+        db_sess.delete(news)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/')
 
 def main():
     db_session.global_init("db/blogs.db")

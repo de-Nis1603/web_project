@@ -2,6 +2,9 @@
 
 {% block content %}
 <h1>Записи в блоге</h1>
+{% if current_user.is_authenticated %}
+    <a href="notice" class="btn btn-secondary">Добавить новость</a>
+{% endif %}
 {% for item in news%}
 <div class="col-md6 border rounded">
     <h2>{{item.title}}</h2>
@@ -11,6 +14,16 @@
     <div>
         Хозяин - {{item.user.name}}, Дата создания - {{item.created_date}}
     </div>
+    {% if current_user.is_authenticated and current_user == item.user %}
+    <div>
+        <a href="/notice/{{ item.id }}" class="btn btn-warning">
+            Изменить
+        </a>
+        <a href="/notice_delete/{{ item.id }}" class="btn btn-danger">
+            Удалить
+        </a>
+    </div>
+{% endif %}
 </div>
 {% endfor %}
 {% endblock %}
