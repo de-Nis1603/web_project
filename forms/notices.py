@@ -7,4 +7,5 @@ from wtforms.validators import DataRequired
 class NoticeForm(FlaskForm):
     title = StringField('Заголовок', validators=[DataRequired()])
     content = TextAreaField("Содержание")
+    points = TextAreaField('Возможное место нахождения')
     submit = SubmitField('Применить')

@@ -22,6 +22,15 @@
             </p>
         {% endfor %}
     </p>
+    <p>
+        {{ form.points.label }}<br>
+        {{ form.points(class="form-control") }}<br>
+        {% for error in form.points.errors %}
+            <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
     {{message}}
 </form>
