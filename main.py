@@ -96,6 +96,14 @@ def add_news():
                            form=form)
 
 
+@app.route('/notice/watch/<int:id>')
+def watch_notice(id):
+    db_sess = db_session.create_session()
+    needed_notice = db_sess.query(Notices).filter(Notices.id == id).first()
+    return render_template('watch.html', name=needed_notice.title, description=needed_notice.content,
+                           owner = needed_notice.user.name)
+
+
 @app.route('/notice/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_news(id):

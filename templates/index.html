@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Записи в блоге</h1>
+<h1>Объявления</h1>
 {% if current_user.is_authenticated %}
-    <a href="notice" class="btn btn-secondary">Добавить новость</a>
+    <a href="notice" class="btn btn-secondary">Добавить объявление</a>
 {% endif %}
 {% for item in news%}
 <div class="col-md6 border rounded">
@@ -12,7 +12,12 @@
         {{item.content}}
     </div>
     <div>
-        Хозяин - {{item.user.name}}, Дата создания - {{item.created_date}}
+        Хозяин - {{item.user.name}}, Дата создания - {{item.created_date}}, Адрес - {{item.points.split("/n")[0]}}
+    </div>
+    <div>
+        <a href="/notice/watch/{{ item.id }}" class="btn btn-success">
+            Смотреть
+        </a>
     </div>
     {% if current_user.is_authenticated and current_user == item.user %}
     <div>
