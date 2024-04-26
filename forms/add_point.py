@@ -4,8 +4,6 @@ from wtforms import BooleanField, SubmitField
 from wtforms.validators import DataRequired
 
 
-class NoticeForm(FlaskForm):
-    title = StringField('Имя', validators=[DataRequired()])
-    content = TextAreaField("Описание")
+class AddPointForm(FlaskForm):
     points = TextAreaField('Возможное место нахождения (обязательно указывать адрес)')
     submit = SubmitField('Отправить')
