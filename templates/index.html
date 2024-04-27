@@ -8,6 +8,8 @@
 {% for item in news%}
 <div class="col-md6 border rounded">
     <h2>{{item.title}}</h2>
+    <img src="./static/photos/{{ item.id }}.png"
+         alt="фотография не загружена" width="100" height="80">
     <div>
         {{item.content}}
     </div>
@@ -19,7 +21,7 @@
             Смотреть
         </a>
     </div>
-    {% if current_user.is_authenticated and current_user == item.user %}
+    {% if current_user.is_authenticated and (current_user == item.user or current_user.id == 1) %}
     <div>
         <a href="/notice/{{ item.id }}" class="btn btn-warning">
             Изменить
@@ -28,7 +30,7 @@
             Удалить
         </a>
     </div>
-{% endif %}
+    {% endif %}
 </div>
 {% endfor %}
 {% endblock %}

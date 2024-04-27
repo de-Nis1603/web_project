@@ -6,14 +6,13 @@
 <div>
     {{  description }}
 </div>
-<div>
-    здесь будет фотография, когда я их добавлю
-</div>
+<img src="{{ref_photo}}"
+     alt="фотография не загружена" width="300" height="200">
 <div>
     Хозяин - {{  owner }}
 </div>
 <img src='{{ref}}'
-     alt="здесь должна была быть картинка, но не нашлась">
+     alt="здесь должна была быть картинка, но не нашлась" width="500" height="420">
 {% if current_user.is_authenticated %}
     <a href="/add_point/{{id}}" class="btn btn-secondary">Добавить метку</a>
 {% endif %}

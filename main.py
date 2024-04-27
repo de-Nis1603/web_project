@@ -6,14 +6,20 @@ from forms.user import RegisterForm, LoginForm
 from forms.notices import NoticeForm
 from forms.add_point import AddPointForm
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-import os
-import pygame
+import io
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import requests
 
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
+
+
+def bytes_to_image_matplotlib(byte_data):
+    image = mpimg.imread(io.BytesIO(byte_data), format='PNG')
+    return image
 
 
 def coordinates_finder(name):
@@ -155,10 +161,14 @@ def add_news():
         news.title = form.title.data
         news.content = form.content.data
         news.points = form.points.data
+        photo_bytes_array = form.image.data
+        print(photo_bytes_array)
         current_user.notices.append(news)
         db_sess.merge(current_user)
         last_id = len(db_sess.query(Notices).all())
         db_sess.commit()
+        photo_bytes_array = form.image.data
+        form.image.data.save(f'static/photos/{last_id}.png')
         map_creator(news.points, last_id)
         return redirect('/')
     return render_template('notices.html', title='Добавление объявления',
@@ -185,18 +195,25 @@ def add_point(id):
                            form=form)
 
 
+@app.route('/pain_rating')
+@login_required
+def rating_boli():
+    return render_template('rating.html', ref=url_for('static', filename='rating.png'), ref2=url_for('static', filename='rating_map.png'))
+
+
 @app.route('/notice/watch/<int:id>')
 def watch_notice(id):
     db_sess = db_session.create_session()
     needed_notice = db_sess.query(Notices).filter(Notices.id == id).first()
     return render_template('watch.html', name=needed_notice.title, description=needed_notice.content,
-                           owner=needed_notice.user.name, id=id, ref=url_for('static', filename=f'maps/map{id}.png'))
+                           owner=needed_notice.user.name, id=id, ref=url_for('static', filename=f'maps/map{id}.png'),
+                           ref_photo=url_for('static', filename=f'photos/{id}.png'))
 
 
 @app.route('/notice/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_news(id):
-    print(7)
+    print('came to edit ' + str(id))
     form = NoticeForm()
     if request.method == "GET":
         print('get method')
@@ -211,6 +228,7 @@ def edit_news(id):
         else:
             abort(404)
     if form.validate_on_submit():
+        print('validate')
         db_sess = db_session.create_session()
         news = db_sess.query(Notices).filter(Notices.id == id,
                                              Notices.user == current_user).first()
@@ -219,7 +237,13 @@ def edit_news(id):
             news.content = form.content.data
             news.points = form.points.data
             db_sess.commit()
+            print('db committed')
             map_creator(form.points.data, id)
+            print(0)
+            photo_bytes_array = form.image.data
+            form.image.data.save(f'static/photos/{id}.png')
+            map_creator(news.points, id)
+            print(6)
             # сюда прописать обработчик для создания фотографии карты
             return redirect('/')
         else:
@@ -234,9 +258,11 @@ def edit_news(id):
 @login_required
 def news_delete(id):
     db_sess = db_session.create_session()
-    news = db_sess.query(Notices).filter(Notices.id == id,
-                                      Notices.user == current_user
-                                      ).first()
+    if current_user.id == 1:
+        news = db_sess.query(Notices).filter(Notices.id == id).first()
+    else:
+        news = db_sess.query(Notices).filter(Notices.id == id,
+                                             Notices.user == current_user).first()
     if news:
         db_sess.delete(news)
         db_sess.commit()

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if current_user.id == 1 %}
+<h1>Рейтинг боли</h1>
+    <h3>Сохранение переданного изображения</h3>
+    <img src="{{ ref }}">
+    <h3>Создание карт с метками</h3>
+    <img src="{{ ref2 }}">
+{% endif %}
+{% endblock %}

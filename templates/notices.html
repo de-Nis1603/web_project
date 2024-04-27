@@ -2,13 +2,22 @@
 
 {% block content %}
 <h1>Добавление объявления</h1>
-<form action="" method="post">
+<form action="" method="post" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <p>
         {{ form.title.label }}<br>
         {{ form.title(class="form-control") }}<br>
         {% for error in form.title.errors %}
             <p class="alert alert-danger" role="alert">
+                {{ error }}
+            </p>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.image.label }}<br>
+        {{ form.image(class="form-control") }}<br>
+        {% for error in form.image.errors %}
+            <p content="alert alert-danger" role="alert">
                 {{ error }}
             </p>
         {% endfor %}
