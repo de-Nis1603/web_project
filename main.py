@@ -228,7 +228,10 @@ def edit_news(id):
     if request.method == "GET":
         print('get method')
         db_sess = db_session.create_session()
-        news = db_sess.query(Notices).filter(Notices.id == id,
+        if current_user.id == 1:
+            news = db_sess.query(Notices).filter(Notices.id == id).first()
+        else:
+            news = db_sess.query(Notices).filter(Notices.id == id,
                                           Notices.user == current_user
                                           ).first()
         if news:
@@ -249,7 +252,6 @@ def edit_news(id):
             db_sess.commit()
             print('db committed')
             map_creator(news.master_points, news.externally_added_points, id)
-            print(0)
             photo_bytes_array = form.image.data
             form.image.data.save(f'static/photos/{id}.png')
             map_creator(news.points, id)
