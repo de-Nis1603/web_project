@@ -7,7 +7,6 @@ from forms.notices import NoticeForm
 from forms.add_point import AddPointForm
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import io
-import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import requests
 
@@ -45,14 +44,14 @@ def coordinates_finder(name):
     else:
         return 'invalid request'
 
-def map_creator(points, id):
+def map_creator(master_points, external_points, id):
     print('creating a map')
     map_request = "http://static-maps.yandex.ru/v1?lang=ru_RU&pt="
     invalids = []
     put_on_the_map = []
     verticals = []
     horizontals = []
-    for point in points.split('\n'):
+    for point in master_points.split('\n'):
         print(point)
         point_cs = coordinates_finder(point).split()
         if point_cs == 'invalid request':
@@ -61,6 +60,16 @@ def map_creator(points, id):
             put_on_the_map.append(str(point_cs[0]) + "," + str(point_cs[1]) + ',pm2rdm')
             verticals.append(float(point_cs[0]))
             horizontals.append(float(point_cs[1]))
+    for point in external_points.split('\n'):
+        print(point)
+        if len(point) > 1:
+            point_cs = coordinates_finder(point).split()
+            if point_cs == 'invalid request':
+                invalids.append(point)
+            else:
+                put_on_the_map.append(str(point_cs[0]) + "," + str(point_cs[1]) + ',pm2blm')
+                verticals.append(float(point_cs[0]))
+                horizontals.append(float(point_cs[1]))
     print(put_on_the_map)
     print('verticals')
     print(verticals)
@@ -160,7 +169,8 @@ def add_news():
         news = Notices()
         news.title = form.title.data
         news.content = form.content.data
-        news.points = form.points.data
+        news.master_points = form.points.data
+        news.externally_added_points = ""
         photo_bytes_array = form.image.data
         print(photo_bytes_array)
         current_user.notices.append(news)
@@ -169,7 +179,7 @@ def add_news():
         db_sess.commit()
         photo_bytes_array = form.image.data
         form.image.data.save(f'static/photos/{last_id}.png')
-        map_creator(news.points, last_id)
+        map_creator(news.master_points, "", last_id)
         return redirect('/')
     return render_template('notices.html', title='Добавление объявления',
                            form=form)
@@ -183,10 +193,10 @@ def add_point(id):
         db_sess = db_session.create_session()
         news = db_sess.query(Notices).filter(Notices.id == id).first()
         if news:
-            news.points += "\n" + form.points.data
-            print(news.points)
+            print(news.externally_added_points)
+            news.externally_added_points += "\n" + form.points.data
             db_sess.commit()
-            map_creator(news.points, id)
+            map_creator(news.master_points, news.externally_added_points, id)
             # сюда прописать обработчик для создания фотографии карты
             return redirect('/')
         else:
@@ -224,7 +234,7 @@ def edit_news(id):
         if news:
             form.title.data = news.title
             form.content.data = news.content
-            form.points.data = news.points
+            form.points.data = news.master_points
         else:
             abort(404)
     if form.validate_on_submit():
@@ -235,10 +245,10 @@ def edit_news(id):
         if news:
             news.title = form.title.data
             news.content = form.content.data
-            news.points = form.points.data
+            news.master_points = form.points.data
             db_sess.commit()
             print('db committed')
-            map_creator(form.points.data, id)
+            map_creator(news.master_points, news.externally_added_points, id)
             print(0)
             photo_bytes_array = form.image.data
             form.image.data.save(f'static/photos/{id}.png')
